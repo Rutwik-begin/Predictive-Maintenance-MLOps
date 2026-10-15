@@ -1,0 +1,29 @@
+{
+    "project": "Predictive Maintenance",
+    "best_model": "Gradient Boosting",
+    "selection_metric": "failure_class_f1",
+    "selection_score": 0.7563025210084033,
+    "features": [
+        "Air temperature [K]",
+        "Process temperature [K]",
+        "Rotational speed [rpm]",
+        "Torque [Nm]",
+        "Tool wear [min]",
+        "Type_H",
+        "Type_L",
+        "Type_M"
+    ],
+    "target": "Machine failure",
+    "positive_class": 1,
+    "threshold": 0.5,
+    "training_rows": 8000,
+    "testing_rows": 2000,
+    "metrics": {
+        "model": "Gradient Boosting",
+        "accuracy": 0.9855,
+        "precision": 0.8823529411764706,
+        "recall": 0.6617647058823529,
+        "f1": 0.7563025210084033,
+        "roc_auc": 0.969575873827792
+    }
+}

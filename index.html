@@ -1,0 +1,305 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Browser-based predictive maintenance demo using machine learning.">
+  <title>Predictive Maintenance | AI Demo</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #10141c;
+      --panel: #1a2230;
+      --border: #303b4c;
+      --text: #f1f5f9;
+      --muted: #a8b5c7;
+      --accent: #f97316;
+      --green: #34d399;
+      --red: #fb7185;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 32px 18px;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main { max-width: 1000px; margin: auto; }
+
+    header { margin-bottom: 26px; }
+
+    h1 { margin: 0 0 8px; font-size: clamp(1.8rem, 4vw, 2.5rem); }
+
+    .subtitle { color: var(--muted); line-height: 1.6; }
+
+    .badge {
+      display: inline-block;
+      padding: 5px 10px;
+      margin-top: 8px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    form {
+      padding: 24px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 20px;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 8px; }
+
+    label { font-size: 0.92rem; font-weight: 600; }
+
+    input, select {
+      width: 100%;
+      padding: 12px;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font: inherit;
+    }
+
+    input:focus, select:focus, button:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .hint { color: var(--muted); font-size: 0.78rem; }
+
+    button {
+      width: 100%;
+      margin-top: 24px;
+      padding: 14px 18px;
+      border: 0;
+      border-radius: 9px;
+      background: var(--accent);
+      color: #fff;
+      font: inherit;
+      font-weight: 750;
+      cursor: pointer;
+    }
+
+    button:hover { filter: brightness(1.08); }
+    button:disabled { opacity: 0.6; cursor: wait; }
+
+    #result {
+      display: none;
+      margin-top: 22px;
+      padding: 22px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--panel);
+    }
+
+    #result.visible { display: block; }
+    #result.success { border-color: var(--green); }
+    #result.warning { border-color: var(--red); }
+    #result.error { border-color: var(--red); }
+
+    #result h2 { margin: 0 0 12px; font-size: 1.25rem; }
+    #prediction { font-size: 1.1rem; font-weight: 750; }
+    #probability { margin-top: 12px; color: var(--muted); }
+
+    .meter {
+      height: 10px;
+      margin-top: 12px;
+      overflow: hidden;
+      background: var(--bg);
+      border-radius: 20px;
+    }
+
+    #meterFill {
+      width: 0;
+      height: 100%;
+      background: var(--green);
+      transition: width 250ms ease;
+    }
+
+    .disclaimer {
+      margin-top: 16px;
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.6;
+    }
+
+    footer {
+      margin-top: 26px;
+      color: var(--muted);
+      font-size: 0.82rem;
+      text-align: center;
+    }
+
+    @media (max-width: 720px) {
+      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      form { padding: 18px; }
+    }
+
+    @media (max-width: 480px) {
+      .grid { grid-template-columns: 1fr; }
+      body { padding: 22px 12px; }
+    }
+  </style>
+</head>
+
+<body>
+<main>
+  <header>
+    <h1>🔧 Predictive Maintenance</h1>
+    <p class="subtitle">
+      Enter machine operating measurements to estimate the likelihood of failure
+      using a trained Gradient Boosting machine-learning model.
+    </p>
+    <span class="badge">Runs locally in your browser · No backend required</span>
+  </header>
+
+  <form id="predictionForm">
+    <div class="grid">
+      <div class="field">
+        <label for="machineType">Machine Type</label>
+        <select id="machineType" required>
+          <option value="L">L — Low</option>
+          <option value="M">M — Medium</option>
+          <option value="H">H — High</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="airTemperature">Air Temperature (K)</label>
+        <input id="airTemperature" type="number" min="250" max="350"
+               step="any" value="298.1" required>
+        <span class="hint">Kelvin</span>
+      </div>
+
+      <div class="field">
+        <label for="processTemperature">Process Temperature (K)</label>
+        <input id="processTemperature" type="number" min="250" max="400"
+               step="any" value="308.6" required>
+        <span class="hint">Kelvin</span>
+      </div>
+
+      <div class="field">
+        <label for="rotationalSpeed">Rotational Speed (rpm)</label>
+        <input id="rotationalSpeed" type="number" min="0" max="10000"
+               step="any" value="1551" required>
+      </div>
+
+      <div class="field">
+        <label for="torque">Torque (Nm)</label>
+        <input id="torque" type="number" min="0" max="200"
+               step="any" value="42.8" required>
+      </div>
+
+      <div class="field">
+        <label for="toolWear">Tool Wear (min)</label>
+        <input id="toolWear" type="number" min="0" max="1000"
+               step="any" value="0" required>
+      </div>
+    </div>
+
+    <button id="predictButton" type="submit">Predict Failure</button>
+  </form>
+
+  <section id="result" aria-live="polite">
+    <h2>Prediction Result</h2>
+    <div id="prediction"></div>
+    <div id="probability"></div>
+    <div class="meter" aria-label="Estimated failure probability">
+      <div id="meterFill"></div>
+    </div>
+    <p class="disclaimer">
+      This result is a model estimate, not a guarantee of machine condition.
+      Do not use it as the sole basis for safety-critical maintenance decisions.
+    </p>
+  </section>
+
+  <footer>
+    Predictive Maintenance · Machine Learning Demo
+  </footer>
+</main>
+
+<script src="predict.js"></script>
+<script>
+  const form = document.getElementById("predictionForm");
+  const button = document.getElementById("predictButton");
+  const resultBox = document.getElementById("result");
+
+  function showError(message) {
+    resultBox.className = "visible error";
+    document.getElementById("prediction").textContent = "Unable to predict";
+    document.getElementById("probability").textContent = message;
+    document.getElementById("meterFill").style.width = "0%";
+  }
+
+  async function loadModel() {
+    const response = await fetch("artifacts/model.json");
+    if (!response.ok) {
+      throw new Error("Could not load the model file. Check that artifacts/model.json exists.");
+    }
+    return response.json();
+  }
+
+  let modelPromise = loadModel();
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    button.disabled = true;
+    button.textContent = "Predicting...";
+
+    try {
+      const model = await modelPromise;
+      const machineType = document.getElementById("machineType").value;
+
+      const input = {
+        "Air temperature [K]": Number(document.getElementById("airTemperature").value),
+        "Process temperature [K]": Number(document.getElementById("processTemperature").value),
+        "Rotational speed [rpm]": Number(document.getElementById("rotationalSpeed").value),
+        "Torque [Nm]": Number(document.getElementById("torque").value),
+        "Tool wear [min]": Number(document.getElementById("toolWear").value),
+        "Type_H": Number(machineType === "H"),
+        "Type_L": Number(machineType === "L"),
+        "Type_M": Number(machineType === "M")
+      };
+
+      const prediction = window.predictFailure(model, input);
+      const percent = prediction.failurePercentage;
+      const failed = prediction.prediction === 1;
+
+      resultBox.className = "visible " + (failed ? "warning" : "success");
+      document.getElementById("prediction").textContent = failed
+        ? "⚠️ Machine failure predicted"
+        : "✅ No machine failure predicted";
+
+      document.getElementById("probability").textContent =
+        "Estimated failure probability: " + percent.toFixed(2) + "%";
+
+      document.getElementById("meterFill").style.width =
+        Math.min(100, Math.max(0, percent)) + "%";
+      document.getElementById("meterFill").style.background =
+        failed ? "var(--red)" : "var(--green)";
+    } catch (error) {
+      showError(error.message || "An unexpected error occurred.");
+    } finally {
+      button.disabled = false;
+      button.textContent = "Predict Failure";
+    }
+  });
+</script>
+</body>
+</html>
